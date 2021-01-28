@@ -1,6 +1,6 @@
 const canvas = document.querySelector('canvas')
 
-    //Player
+
 const playerhold = canvas.getContext('2d')
 
     //When using a windows property can put innerWidth
@@ -18,7 +18,6 @@ class Player {
     }
     draw() {
         playerhold.beginPath()
-    //Allows us to draw our player
     //    (var).arc(x: Int, y: Int, r: Int, startAngle: Float, endAngle: Float,
     //    drawCounterClockwise: Bool (false));
         playerhold.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
@@ -37,6 +36,7 @@ class shoots {
         this.color = color
         this.velocity = velocity
     }
+    
     draw() {
         playerhold.beginPath()
         playerhold.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
@@ -60,12 +60,12 @@ const playerR1 = new Player(x, y, 30, 'blue')
 playerR1.draw()
 
 const projectile = new shoots(
-    canvas.width / 2, canvas.height / 2, 'purple', 
+    canvas.width / 2, canvas.height / 2, 5, 'purple', 
 // Diffrent x and y values so projectiles can go somewhere
-        {
+    {
             x: 1, y: 1
-        }
-    )
+    }
+)
     
     function animate() {
         requestAnimationFrame(animate)
@@ -73,7 +73,7 @@ const projectile = new shoots(
         projectile.draw()
         //To add velocity to our attacks
         projectile.update()
-    }
+}
 
     //Allows us to create the shooting function
     addEventListener('click', (event) => { })
