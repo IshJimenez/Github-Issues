@@ -109,7 +109,7 @@ const legiondoom = []
 
     function  spawnMrFreeze() {     //To render on the screen and move them at the same time
         setInterval(() => {         //call back function then time between iterirations
-            const radius = 30
+            const radius = Math.random() * (30 - 4) + 4         //Allows us to make the size 4 - 30
 
         let x
         let y
@@ -119,7 +119,7 @@ const legiondoom = []
             y = Math.random() * canvas.height   
         } else {  
             x = Math.random() * canvas.width
-            y = ath.random() < 0.5 ? 0 - radius : canvas.height + radius
+            y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius
         }
             const color = 'orange'
             const angle = Math.atan2(canvas.height/ 2 - y,   //subtract from destination
@@ -135,16 +135,35 @@ const legiondoom = []
         }, 1000)                    
     }
     
+
+    let animatedId                            //Will pass through cancel to stop game
     function animate() {
-        requestAnimationFrame(animate)
+        animatedId = requestAnimationFrame(animate)                //Returns value of what your currently on
         playerhold.clearRect(0, 0, canvas.width, canvas.height)     //See dots w/o lines
         playerR1.draw()                                             //See player
         projectiles.forEach(projectile => {
             projectile.update ()
     })
-
-        legiondoom.forEach((mrFreeze) => {                          //We see enemies
+                                                     //index will help remove when it touches below
+        legiondoom.forEach((mrFreeze, index) => {                          //We see enemies
             mrFreeze.update()
+
+            const distance = Math.hypot(playerR1.x - mrFreeze.x, playerR1.y - mrFreeze.y)   //distance                          
+            if (distance - mrFreeze.radius - playerR1.radius < 1)  {              //from player to mrfreeze
+                cancelAnimationFrame(animatedId)                                //stops game
+            }
+
+            projectiles.forEach((projectile, projectileIndex) => {                 //hypot calculates distance x to y
+                const distance = Math.hypot(projectile.x -mrFreeze.x, projectile.y - mrFreeze.y)
+
+                if (distance - mrFreeze.radius - projectile.radius < 1)     //mrfreeze collision
+                {
+                    setTimeout(() => {               //Remove flash from collision 1st callbackback 2nd time
+                    legiondoom.splice(index, 1)             //Remove from screen
+                    projectiles.splice(projectileIndex, 1)
+                    }, 0)               
+                }
+            })
         })
 }
 
@@ -167,3 +186,5 @@ const legiondoom = []
 
     animate()
     spawnMrFreeze()
+
+    //Checking commit issue
