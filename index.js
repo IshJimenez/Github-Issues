@@ -9,6 +9,11 @@ const playerhold = canvas.getContext('2d')
     canvas.width = innerWidth
     canvas.height = innerHeight
 
+    const scoreId = document.querySelector('#scoreId');
+    const startGameId = document.querySelector('#startGameId')
+    const startGameBox = document.querySelector('#startGameBox')
+    const finalScore = document.querySelector('#finalScore')
+
 class Player {
     constructor(x, y, radius, color) {
         this.x = x
@@ -74,6 +79,7 @@ class mrFreeze {
     }
 }
 
+const friction = 0.99
 class Explode {
     constructor(x, y, radius, color, velocity) {
         this.x = x
@@ -81,19 +87,26 @@ class Explode {
         this.radius = radius
         this.color = color
         this.velocity = velocity
-    }
+        this.alpha = 1                              //Always start being equal to 1.  Opacity
+    }                                               //Dont need to pass in an argument. dots fade
     
     draw() {
+        playerhold.save()                       //Allows us to call a global canvas fucntion
+        playerhold.globalAlpha = this.alpha            //fades the dots. Can be a num. A - num makes them reapper
         playerhold.beginPath()
         playerhold.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
         playerhold.fillStyle = this.color
         playerhold.fill()
+        playerhold.restore()               //Stops the save
     }
     //To add velocity to our attacks
     update() {
         this.draw()
+        this.velocity.x *= friction                              //To slow explosion dots
+        this.velocity.y *= friction
         this.x = this.x + this.velocity.x
         this.y = this.y + this.velocity.y
+        this.alpha -= 0.01                          //Will fade over time
     }
 }
 
@@ -102,11 +115,24 @@ class Explode {
 const x = canvas.width / 2
 const y = canvas.height / 2
 
-    // When you make a new player can be put in new locations, new colors, etc
-const playerR1 = new Player(x, y, 11, 'white')  
-const projectiles = []   
-const legiondoom = []
-const boom = []    
+       // When you make a new player can be put in new locations, new colors, etc
+     let  playerR1 = new Player(x, y, 11, 'white')  
+     let  projectiles = []   
+     let  legiondoom = []
+     let  dots = []    
+
+    function restartgame() {                                //To restart game
+        // When you make a new player can be put in new locations, new colors, etc
+    playerR1 = new Player(x, y, 11, 'white')  
+    projectiles = []   
+    legiondoom = []
+    dots = []
+    score = 0
+    scoreId.innerHTML = score
+    finalScore.innerHTML = score
+}
+
+
     
 playerR1.draw()      //Will need to  be created to see player part 2
 
@@ -161,14 +187,20 @@ const projectile2 = new shoots(
     
 
 let animatedId                            //Will pass through cancel to stop game
+let score = 0
     function animate() {
         animatedId = requestAnimationFrame(animate)                //Returns value of what your currently on
         playerhold.fillStyle = 'rgba(0, 0, 0, 0.1)'                 //last = fade effect
         playerhold.fillRect(0, 0, canvas.width, canvas.height)     //Dots w/o lines. Rect = color change
         playerR1.draw()                                             //See player
-        boom.forEach(Explode => {
-            Explode.update()
-        });
+        dots.forEach((dot, index) => {                              
+        if (dot.alpha <= 0) {                                       //To specify when to remove
+        dots.splice(index, 1)
+        } else {
+            dot.update()
+        }
+        })
+
         projectiles.forEach((projectile, index) => {                  //index specifies where to delete MrFreeze
             projectile.update ()
 
@@ -190,6 +222,8 @@ let animatedId                            //Will pass through cancel to stop gam
             const distance = Math.hypot(playerR1.x - mrFreeze.x, playerR1.y - mrFreeze.y)   //distance                          
             if (distance - mrFreeze.radius - playerR1.radius < 1)  {              //from player to mrfreeze
                 cancelAnimationFrame(animatedId)                                //stops game
+                startGameBox.style.display = 'flex'                         //Will show gameover when died
+                finalScore.innerHTML = score                               //Will update gameover score
             }
 
             projectiles.forEach((projectile, projectileIndex) => {                 //hypot calculates distance x to y
@@ -197,27 +231,36 @@ let animatedId                            //Will pass through cancel to stop gam
 
                 if (distance - mrFreeze.radius - projectile.radius < 1)     //mrfreeze collision
                 {
-                       for (let i = 0; i < 8; i++) {                         //Num will show how many explosions
-                        boom.push(                                             // will have
+                score += 10                                                    //increase score
+                scoreId.innerHTML = score  
+
+
+
+                       for (let i = 0; i < mrFreeze.radius * 2; i++) {                         //Num will show how many explosions
+                        dots.push(                                             // will have
                             new Explode(projectile.x, 
                             projectile.y, 
-                            3, 
+                            Math.random() * 3,                              //Makes explosions dif
                             mrFreeze.color, 
                             {
-                                x: Math.random() -0.5,                      //Math random does from 0 to 1 need some neg in there
-                                y: Math.random() -0.5,
+                            x: (Math.random() -0.5) * (Math.random() * 4),     //Math random does from 0 to 1 need some neg in there to be really random
+                            y: (Math.random() -0.5) * (Math.random() * 4),                            //send num speed    
                             })
                             )
                        } 
 
                     if (mrFreeze.radius -10 > 6) {             //Shrink bigger mrFreezes when shot
-                        gsap.to(mrFreeze, {                     //Makes shrink nicer need 2nd script added in html
-                        radius: mrFreeze.radius -= 10
+                    score += 10                                                    //increase score
+                    scoreId.innerHTML = score  
+                    gsap.to(mrFreeze, {                     //Makes shrink nicer need 2nd script added in html
+                    radius: mrFreeze.radius -= 10
                 })
                     setTimeout(() => {               //Remove flash from collision 1st callbackback 2nd time
                             projectiles.splice(projectileIndex, 1)
                     }, 0)
                 } else {
+                    score += 30             //increase score more if you have to make it smaller to kill                                     
+                    scoreId.innerHTML = score           
                     setTimeout(() => {               //Remove flash from collision 1st callbackback 2nd time
                     legiondoom.splice(index, 1)             //Remove from screen
                     projectiles.splice(projectileIndex, 1)
@@ -245,7 +288,9 @@ addEventListener('click', (event) => {
         )
     })
 
+    startGameId.addEventListener('click', () => {
+    restartgame()
     animate()
     spawnMrFreeze()
-
-    //Checking commit issue
+    startGameBox.style.display = 'none'
+    })
